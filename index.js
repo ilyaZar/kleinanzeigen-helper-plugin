@@ -1,8 +1,8 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import {
-  APPROVAL_TOOL_NAMES,
   createKleinanzeigenTools,
   OPTIONAL_TOOL_NAMES,
+  resolveApprovalToolNames,
 } from "./src/tools.js";
 
 export default definePluginEntry({
@@ -11,7 +11,9 @@ export default definePluginEntry({
   description:
     "Kleinanzeigen helper tools for a local kleinanzeigen-bot setup with redacted output.",
   register(api) {
-    const tools = createKleinanzeigenTools(api.pluginConfig ?? {});
+    const pluginConfig = api.pluginConfig ?? {};
+    const tools = createKleinanzeigenTools(pluginConfig);
+    const approvalToolNames = resolveApprovalToolNames(pluginConfig);
 
     for (const tool of tools) {
       api.registerTool(
@@ -23,7 +25,7 @@ export default definePluginEntry({
     api.on(
       "before_tool_call",
       (event) => {
-        if (!APPROVAL_TOOL_NAMES.has(event.toolName)) {
+        if (!approvalToolNames.has(event.toolName)) {
           return;
         }
 

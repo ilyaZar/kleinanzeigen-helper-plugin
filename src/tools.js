@@ -21,6 +21,16 @@ export const OPTIONAL_TOOL_NAMES = new Set([
 
 export const APPROVAL_TOOL_NAMES = new Set(OPTIONAL_TOOL_NAMES);
 
+export function resolveApprovalToolNames(config = {}) {
+  const mode = typeof config.approvalMode === "string" ? config.approvalMode : "all";
+
+  if (mode === "mutating") {
+    return new Set(SIDE_EFFECT_TOOL_NAMES);
+  }
+
+  return new Set(APPROVAL_TOOL_NAMES);
+}
+
 const adIdsSchema = {
   type: "array",
   minItems: 1,

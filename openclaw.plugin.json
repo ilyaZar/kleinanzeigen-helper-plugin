@@ -61,6 +61,15 @@
         "minimum": 0,
         "maximum": 20000,
         "description": "Maximum sanitized stdout or stderr characters returned to the model."
+      },
+      "approvalMode": {
+        "type": "string",
+        "enum": [
+          "all",
+          "mutating"
+        ],
+        "default": "all",
+        "description": "Approval behavior. Defaults to all tools; use mutating for local status/verify smoke checks."
       }
     }
   }

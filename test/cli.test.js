@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
+  buildRedactions,
   buildChildEnv,
   buildKleinanzeigenArgs,
   detectUserActionRequest,
@@ -186,6 +187,30 @@ describe("redacted output handling", () => {
     );
   });
 
+  it("redacts the config parent workspace path", () => {
+    const configPath = path.join(os.tmpdir(), "kleinclaw-redactions", "config.yaml");
+    const workspacePath = path.dirname(configPath);
+    const output = sanitizeText(
+      [`Workspace: ${workspacePath}`, `Config: ${configPath}`].join("\n"),
+      buildRedactions({ configPath }),
+      1000,
+    );
+
+    assert.equal(output, "Workspace: [redacted-path]\nConfig: [redacted-path]");
+    assert.doesNotMatch(output, /kleinclaw-redactions|config\.yaml/);
+  });
+
+  it("does not redact every dot or slash for shallow config paths", () => {
+    assert.equal(
+      sanitizeText("DONE: version 1.2.3.", buildRedactions({ configPath: "config.yaml" }), 1000),
+      "DONE: version 1.2.3.",
+    );
+    assert.equal(
+      sanitizeText("Config: /config.yaml\nPath: /tmp/run", buildRedactions({ configPath: "/config.yaml" }), 1000),
+      "Config: [redacted-path]\nPath: /tmp/run",
+    );
+  });
+
   it("can suppress sanitized output entirely", () => {
     assert.equal(sanitizeText("password: sample-value", [], 0), "");
   });
@@ -224,6 +249,8 @@ describe("redacted output handling", () => {
 
   it("detects local bot prompts that need a direct user run", () => {
     assert.equal(detectUserActionRequest("Press ENTER when done...").needsUserAction, true);
+    assert.equal(detectUserActionRequest("Captcha detected. Sleeping 6h before restart...").needsUserAction, true);
+    assert.equal(detectUserActionRequest("# Captcha vorhanden! Bitte lösen Sie das Captcha.").needsUserAction, true);
     assert.equal(detectUserActionRequest("EOFError: EOF when reading a line").needsUserAction, true);
     assert.equal(detectUserActionRequest("DONE: No configuration errors found.").needsUserAction, false);
   });
