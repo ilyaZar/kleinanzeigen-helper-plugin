@@ -45,6 +45,7 @@ function textResult(payload) {
       operation: payload.operation,
       exitCode: payload.exitCode,
       timedOut: payload.timedOut,
+      needsUserAction: payload.needsUserAction ?? false,
     },
   };
 }

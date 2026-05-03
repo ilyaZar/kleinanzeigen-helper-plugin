@@ -40,6 +40,12 @@ const SECRET_ENV_RE = /(api|auth|cookie|credential|key|login|pass|secret|session
 const SENSITIVE_LINE_RE =
   /\b(password|passwd|username|login|cookie|session|token|secret|credential|2fa|sms|user[_-]?data[_-]?dir|profile_name|browser profile)\b/i;
 const EMAIL_RE = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
+const USER_ACTION_RE =
+  /\b(press (enter|a key)|when done|manual inspection|please solve|eof when reading a line|eoferror)\b/i;
+const USER_ACTION_HINT = [
+  "The local bot stopped for a manual account step.",
+  "Run it directly in a terminal/browser, finish that step, then retry this tool.",
+].join(" ");
 
 function normalizeOptionalString(value) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
@@ -226,6 +232,13 @@ export function redactArgs(args = []) {
   });
 }
 
+export function detectUserActionRequest(text) {
+  return {
+    needsUserAction: USER_ACTION_RE.test(String(text ?? "")),
+    userActionHint: USER_ACTION_HINT,
+  };
+}
+
 export function resolveCliConfig(config = {}) {
   const cliPath = normalizeOptionalString(config.cliPath) ?? "kleinanzeigen-bot";
   const configuredConfigPath = normalizeOptionalString(config.configPath);
@@ -344,6 +357,9 @@ export async function runKleinanzeigenOperation(operation, params = {}, config =
     maxBufferChars: cliConfig.maxOutputChars,
     env: buildChildEnv(),
   });
+  const userAction = detectUserActionRequest(
+    [result.stdout, result.stderr, result.error?.message].filter(Boolean).join("\n"),
+  );
 
   const stdout = sanitizeText(result.stdout, redactions, cliConfig.maxOutputChars);
   const stderr = sanitizeText(
@@ -362,6 +378,8 @@ export async function runKleinanzeigenOperation(operation, params = {}, config =
     exitCode: result.exitCode,
     signal: result.signal,
     timedOut: result.timedOut,
+    needsUserAction: userAction.needsUserAction,
+    ...(userAction.needsUserAction ? { userActionHint: userAction.userActionHint } : {}),
     stdout,
     stderr,
   };
