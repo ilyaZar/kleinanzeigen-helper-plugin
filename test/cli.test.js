@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildChildEnv,
   buildKleinanzeigenArgs,
+  detectUserActionRequest,
   redactArgs,
   runProcess,
   sanitizeText,
@@ -144,5 +145,11 @@ describe("redacted output handling", () => {
     assert.equal(result.stderr.length, 6);
     assert.equal(sanitizeText(result.stdout, [], 5), "xxxxx\n[truncated]");
     assert.equal(sanitizeText(result.stderr, [], 5), "yyyyy\n[truncated]");
+  });
+
+  it("detects local bot prompts that need a direct user run", () => {
+    assert.equal(detectUserActionRequest("Press ENTER when done...").needsUserAction, true);
+    assert.equal(detectUserActionRequest("EOFError: EOF when reading a line").needsUserAction, true);
+    assert.equal(detectUserActionRequest("DONE: No configuration errors found.").needsUserAction, false);
   });
 });
