@@ -4,7 +4,7 @@
   <a href="https://github.com/ilyaZar/kleinanzeigen-helper-plugin/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/ilyaZar/kleinanzeigen-helper-plugin/ci.yml?branch=main&style=flat-square&logo=github&logoColor=white&label=CI&labelColor=2a7e3b&color=1b5e2a"></a>
   <a href="https://codecov.io/gh/ilyaZar/kleinanzeigen-helper-plugin"><img alt="coverage" src="https://img.shields.io/codecov/c/github/ilyaZar/kleinanzeigen-helper-plugin/main?style=flat-square&logo=codecov&logoColor=white&labelColor=6b3fa0&color=4b2d73"></a>
   <a href="https://github.com/ilyaZar/kleinanzeigen-helper-plugin/blob/main/package.json"><img alt="version" src="https://img.shields.io/github/package-json/v/ilyaZar/kleinanzeigen-helper-plugin?style=flat-square&label=version&labelColor=4a999d&color=346c6e"></a>
-  <a href="https://docs.openclaw.ai/tools/clawhub"><img alt="OpenClaw code plugin" src="https://img.shields.io/badge/OpenClaw-code%20plugin-346c6e?style=flat-square&labelColor=4a999d"></a>
+  <a href="https://docs.openclaw.ai/tools/clawhub"><img alt="OpenClaw code plugin" src="docs/badges/openclaw-code-plugin.svg"></a>
   <a href="https://nodejs.org"><img alt="JavaScript Node 22+" src="https://img.shields.io/badge/JavaScript-Node%2022%2B-264a6e?style=flat-square&logo=javascript&logoColor=111827&labelColor=f7df1e"></a>
   <a href="https://github.com/ilyaZar/kleinanzeigen-helper-plugin/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/github/license/ilyaZar/kleinanzeigen-helper-plugin?style=flat-square&labelColor=629944&color=446a30"></a>
 </p>
