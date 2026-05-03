@@ -7,6 +7,7 @@ import {
   APPROVAL_TOOL_NAMES,
   createKleinanzeigenTools,
   OPTIONAL_TOOL_NAMES,
+  resolveApprovalToolNames,
   SIDE_EFFECT_TOOL_NAMES,
 } from "../src/tools.js";
 
@@ -31,6 +32,11 @@ describe("kleinanzeigen plugin tools", () => {
       ],
     );
     assert.deepEqual([...APPROVAL_TOOL_NAMES], [...OPTIONAL_TOOL_NAMES]);
+    assert.deepEqual([...resolveApprovalToolNames()], [...OPTIONAL_TOOL_NAMES]);
+    assert.deepEqual(
+      [...resolveApprovalToolNames({ approvalMode: "mutating" })],
+      [...SIDE_EFFECT_TOOL_NAMES],
+    );
   });
 
   it("runs a mock CLI and returns sanitized output", async () => {

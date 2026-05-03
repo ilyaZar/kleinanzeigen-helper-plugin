@@ -26,10 +26,12 @@ returning it to your OpenClaw agent.
 - `kleinanzeigen_download`: downloads selected ads into the bot workspace.
 - `kleinanzeigen_extend`: extends eligible selected ads.
 
-The tools are optional because they run a local command. All tools require
-OpenClaw approval before they run. Account-changing tools also require
-`confirm: true`. Tool output is capped and redacted for configured paths, email
-addresses, and credential-like lines.
+The tools are optional because they run a local command. By default all tools
+require OpenClaw approval before they run. Set `approvalMode` to `mutating` only
+for local smoke checks where status and verify should run without an approval
+route. Account-changing tools also require `confirm: true`. Tool output is
+capped and redacted for configured paths, email addresses, and credential-like
+lines.
 
 ## Install
 
@@ -79,10 +81,27 @@ directories.
           "workspaceMode": "portable",
           "lang": "de",
           "timeoutMs": 120000,
-          "maxOutputChars": 6000
+          "maxOutputChars": 6000,
+          "approvalMode": "all"
         }
       }
     }
+  }
+}
+```
+
+Also expose the optional tools through OpenClaw tool policy. Include
+`kleinclaw` in the explicit allowlist, or include the individual tool names if
+you need finer control. For a minimal KleinClaw-only dev agent:
+
+```json
+{
+  "tools": {
+    "profile": "full",
+    "allow": [
+      "session_status",
+      "kleinclaw"
+    ]
   }
 }
 ```

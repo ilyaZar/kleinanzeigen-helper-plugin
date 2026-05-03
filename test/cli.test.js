@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
+  buildRedactions,
   buildChildEnv,
   buildKleinanzeigenArgs,
   detectUserActionRequest,
@@ -184,6 +185,19 @@ describe("redacted output handling", () => {
         "[redacted sensitive line]",
       ].join("\n"),
     );
+  });
+
+  it("redacts the config parent workspace path", () => {
+    const configPath = path.join(os.tmpdir(), "kleinclaw-redactions", "config.yaml");
+    const workspacePath = path.dirname(configPath);
+    const output = sanitizeText(
+      [`Workspace: ${workspacePath}`, `Config: ${configPath}`].join("\n"),
+      buildRedactions({ configPath }),
+      1000,
+    );
+
+    assert.equal(output, "Workspace: [redacted-path]\nConfig: [redacted-path]");
+    assert.doesNotMatch(output, /kleinclaw-redactions|config\.yaml/);
   });
 
   it("can suppress sanitized output entirely", () => {

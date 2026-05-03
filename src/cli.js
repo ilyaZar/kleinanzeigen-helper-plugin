@@ -203,11 +203,21 @@ export function buildChildEnv(sourceEnv = process.env) {
 }
 
 export function buildRedactions(config = {}) {
-  return [
-    config.cliPath,
-    config.workingDirectory,
-    config.configPath,
-  ].filter((value) => typeof value === "string" && value.trim());
+  const values = [];
+  const add = (value) => {
+    if (typeof value === "string" && value.trim()) {
+      values.push(value.trim());
+    }
+  };
+
+  add(config.cliPath);
+  add(config.workingDirectory);
+  add(config.configPath);
+  if (typeof config.configPath === "string" && config.configPath.trim()) {
+    add(path.dirname(config.configPath.trim()));
+  }
+
+  return [...new Set(values)].sort((a, b) => b.length - a.length);
 }
 
 export function sanitizeText(text, redactions = [], maxChars = 6000) {
