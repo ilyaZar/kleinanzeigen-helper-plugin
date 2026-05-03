@@ -61,7 +61,12 @@ describe("kleinanzeigen plugin tools", () => {
     const payload = JSON.parse(result.content[0].text);
 
     assert.equal(payload.ok, true);
-    assert.deepEqual(payload.command.args, ["--config=[redacted]", "--logfile=", "verify"]);
+    assert.deepEqual(payload.command.args, [
+      "--config=[redacted]",
+      "--logfile=",
+      "--workspace-mode=portable",
+      "verify",
+    ]);
     assert.match(payload.stdout, /using \[redacted-path\]/);
     assert.equal(payload.stderr, "[redacted sensitive line]");
     assert.doesNotMatch(result.content[0].text, /should-not-leak|private\/config/);

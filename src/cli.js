@@ -53,6 +53,14 @@ function normalizeOptionalString(value) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function normalizeWorkspaceMode(value) {
+  const mode = normalizeOptionalString(value) ?? "portable";
+  if (!["portable", "xdg"].includes(mode)) {
+    throw new Error("workspaceMode must be portable or xdg");
+  }
+  return mode;
+}
+
 function normalizePositiveInteger(value, fallback, min, max) {
   if (!Number.isInteger(value)) {
     return fallback;
@@ -122,7 +130,7 @@ export function buildKleinanzeigenArgs(operation, params = {}, config = {}) {
 
   const args = [];
   const configPath = normalizeOptionalString(config.configPath);
-  const workspaceMode = normalizeOptionalString(config.workspaceMode);
+  const workspaceMode = normalizeWorkspaceMode(config.workspaceMode);
   const lang = normalizeOptionalString(config.lang);
 
   if (!configPath) {
@@ -130,13 +138,7 @@ export function buildKleinanzeigenArgs(operation, params = {}, config = {}) {
   }
   args.push(`--config=${configPath}`);
   args.push("--logfile=");
-
-  if (workspaceMode) {
-    if (!["portable", "xdg"].includes(workspaceMode)) {
-      throw new Error("workspaceMode must be portable or xdg");
-    }
-    args.push(`--workspace-mode=${workspaceMode}`);
-  }
+  args.push(`--workspace-mode=${workspaceMode}`);
   if (lang) {
     if (!["en", "de"].includes(lang)) {
       throw new Error("lang must be en or de");
@@ -272,7 +274,7 @@ export function resolveCliConfig(config = {}) {
     cliPath,
     cwd,
     configPath,
-    workspaceMode: normalizeOptionalString(config.workspaceMode),
+    workspaceMode: normalizeWorkspaceMode(config.workspaceMode),
     lang: normalizeOptionalString(config.lang),
     timeoutMs: normalizePositiveInteger(config.timeoutMs, 120000, 1000, 600000),
     maxOutputChars: normalizePositiveInteger(config.maxOutputChars, 6000, 0, 20000),
@@ -441,7 +443,7 @@ export async function getKleinanzeigenStatus(config = {}) {
     executable: path.basename(cliPath),
     cwd: cwd ? "[redacted-path]" : null,
     configFile,
-    workspaceMode: normalizeOptionalString(config.workspaceMode) ?? null,
+    workspaceMode: normalizeWorkspaceMode(config.workspaceMode),
     version: firstNonEmptyLine(versionText),
     commands: commandSupportFromHelp(helpText),
     exitCode: helpResult?.exitCode ?? versionResult.exitCode,
