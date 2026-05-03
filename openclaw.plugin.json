@@ -1,0 +1,73 @@
+{
+  "id": "kleinanzeigen-helper",
+  "name": "Kleinanzeigen Helper",
+  "description": "Typed tools for a local kleinanzeigen-bot setup with redacted output.",
+  "version": "0.1.0",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "kleinanzeigen_verify",
+      "kleinanzeigen_publish",
+      "kleinanzeigen_update",
+      "kleinanzeigen_delete",
+      "kleinanzeigen_download",
+      "kleinanzeigen_extend"
+    ]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "cliPath": {
+        "type": "string",
+        "description": "Path or command name for the local kleinanzeigen-bot executable."
+      },
+      "workingDirectory": {
+        "type": "string",
+        "description": "Directory where the bot should run when no config path is set."
+      },
+      "configPath": {
+        "type": "string",
+        "description": "Optional path to the bot config. Tool output redacts this path."
+      },
+      "workspaceMode": {
+        "type": "string",
+        "enum": [
+          "portable",
+          "xdg"
+        ],
+        "description": "Optional kleinanzeigen-bot workspace mode."
+      },
+      "cliProfile": {
+        "type": "string",
+        "enum": [
+          "legacy",
+          "current"
+        ],
+        "description": "Use legacy unless the installed CLI supports update and extend commands."
+      },
+      "lang": {
+        "type": "string",
+        "enum": [
+          "en",
+          "de"
+        ],
+        "description": "Optional bot display language."
+      },
+      "timeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 600000,
+        "description": "Maximum runtime for one bot command."
+      },
+      "maxOutputChars": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 20000,
+        "description": "Maximum sanitized stdout or stderr characters returned to the model."
+      }
+    }
+  }
+}

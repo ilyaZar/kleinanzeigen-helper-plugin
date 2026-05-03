@@ -1,0 +1,23 @@
+{
+  "name": "kleinanzeigen-helper",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenClaw tools for a local kleinanzeigen-bot setup with redacted output",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.5.2",
+      "minGatewayVersion": "2026.5.2"
+    },
+    "build": {
+      "openclawVersion": "2026.5.2",
+      "pluginSdkVersion": "2026.5.2"
+    }
+  }
+}
