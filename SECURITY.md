@@ -14,3 +14,6 @@ directly. Output returned to OpenClaw is redacted and capped, but local bot logs
 and browser/session state remain outside this package. If the local bot needs
 hands-on account work, handle that outside OpenClaw and then run the plugin
 again.
+
+Package install scripts are not used for this plugin. The upstream bot is a
+separate local install managed by the user.
