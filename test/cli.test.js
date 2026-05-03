@@ -62,7 +62,7 @@ describe("kleinanzeigen CLI argument builder", () => {
         { confirm: true, adIds: ["123", "456"] },
         { configPath: "config.yaml" },
       ),
-      ["--config=config.yaml", "--logfile=", "delete", "--ads=123,456"],
+      ["--config=config.yaml", "--logfile=", "--workspace-mode=portable", "delete", "--ads=123,456"],
     );
   });
 
@@ -94,7 +94,7 @@ describe("kleinanzeigen CLI argument builder", () => {
         { confirm: true, selector: "all" },
         { configPath: "config.yaml" },
       ),
-      ["--config=config.yaml", "--logfile=", "update", "--ads=all"],
+      ["--config=config.yaml", "--logfile=", "--workspace-mode=portable", "update", "--ads=all"],
     );
     assert.throws(
       () =>
@@ -111,7 +111,7 @@ describe("kleinanzeigen CLI argument builder", () => {
         { confirm: true, selectors: ["changed", "due", "changed"] },
         { configPath: "config.yaml" },
       ),
-      ["--config=config.yaml", "--logfile=", "publish", "--ads=changed,due"],
+      ["--config=config.yaml", "--logfile=", "--workspace-mode=portable", "publish", "--ads=changed,due"],
     );
     assert.deepEqual(
       buildKleinanzeigenArgs(
@@ -119,7 +119,7 @@ describe("kleinanzeigen CLI argument builder", () => {
         { confirm: true },
         { configPath: "config.yaml" },
       ),
-      ["--config=config.yaml", "--logfile=", "extend", "--ads=all"],
+      ["--config=config.yaml", "--logfile=", "--workspace-mode=portable", "extend", "--ads=all"],
     );
   });
 });

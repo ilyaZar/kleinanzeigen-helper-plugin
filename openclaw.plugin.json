@@ -39,7 +39,8 @@
           "portable",
           "xdg"
         ],
-        "description": "Optional kleinanzeigen-bot workspace mode."
+        "default": "portable",
+        "description": "kleinanzeigen-bot workspace mode. Defaults to portable."
       },
       "lang": {
         "type": "string",

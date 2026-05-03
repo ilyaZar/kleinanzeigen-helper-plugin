@@ -45,6 +45,8 @@ Restart the Gateway after installing plugin code.
 
 Add the plugin config under `plugins.entries.kleinanzeigen-helper.config`.
 Either `configPath` or `workingDirectory` must be set.
+`workspaceMode` defaults to `portable`. Set it to `xdg` only when your local bot
+setup already uses user directories.
 
 ```json
 {
