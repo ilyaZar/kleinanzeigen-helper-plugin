@@ -68,12 +68,13 @@ bot supports the newer `update` and `extend` commands.
 ## Notes
 
 The local bot owns browser/session behavior. If Kleinanzeigen asks for a normal
-account check, the user handles that in the already configured local setup. This
-plugin does not try to work around those checks.
+account check, the user must handle that in the already configured local setup
+or during the local bot run when a browser window asks for it. **This plugin
+does not work around those checks.**
 
-Keep passwords, cookies, browser profile data, and full bot config files out of
-chat. Fix bot auth and account state locally, then run `kleinanzeigen_verify`
-again.
+**Keep passwords, cookies, browser profile data, and full bot config files out
+of chat**. Fix bot auth and account state locally, then run
+`kleinanzeigen_verify` again.
 
 ## Development
 
