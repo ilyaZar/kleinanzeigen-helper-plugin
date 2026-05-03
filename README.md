@@ -32,6 +32,10 @@ openclaw plugins install clawhub:kleinanzeigen-helper
 Install and set up `kleinanzeigen-bot` separately first, then point this plugin
 at that local executable and config.
 
+Installing this plugin does not download or install the upstream bot. For a
+source checkout, point `cliPath` at a small executable wrapper script instead of
+putting a shell command such as `pdm run app` there.
+
 For local development:
 
 ```bash
