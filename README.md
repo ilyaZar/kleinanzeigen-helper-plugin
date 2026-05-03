@@ -17,9 +17,10 @@ This is an unofficial helper. It is not affiliated with Kleinanzeigen.
 - `kleinanzeigen_download`: downloads selected ads into the bot workspace.
 - `kleinanzeigen_extend`: extends eligible selected ads.
 
-The account-changing tools require `confirm: true` and OpenClaw approval before
-they run. Tool output is capped and redacted for configured paths, email
-addresses, and credential-like lines.
+The tools are optional because they run a local command. Account-changing tools
+also require `confirm: true` and OpenClaw approval before they run. Tool output
+is capped and redacted for configured paths, email addresses, and
+credential-like lines.
 
 ## Install
 
