@@ -8,6 +8,11 @@ export const SIDE_EFFECT_TOOL_NAMES = new Set([
   "kleinanzeigen_extend",
 ]);
 
+export const OPTIONAL_TOOL_NAMES = new Set([
+  "kleinanzeigen_verify",
+  ...SIDE_EFFECT_TOOL_NAMES,
+]);
+
 const adIdsSchema = {
   type: "array",
   minItems: 1,

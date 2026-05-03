@@ -1,5 +1,9 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
-import { createKleinanzeigenTools, SIDE_EFFECT_TOOL_NAMES } from "./src/tools.js";
+import {
+  createKleinanzeigenTools,
+  OPTIONAL_TOOL_NAMES,
+  SIDE_EFFECT_TOOL_NAMES,
+} from "./src/tools.js";
 
 export default definePluginEntry({
   id: "kleinanzeigen-helper",
@@ -11,7 +15,7 @@ export default definePluginEntry({
     for (const tool of tools) {
       api.registerTool(
         tool,
-        SIDE_EFFECT_TOOL_NAMES.has(tool.name) ? { optional: true } : undefined,
+        OPTIONAL_TOOL_NAMES.has(tool.name) ? { optional: true } : undefined,
       );
     }
 
