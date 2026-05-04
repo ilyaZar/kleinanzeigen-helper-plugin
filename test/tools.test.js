@@ -17,20 +17,28 @@ describe("kleinanzeigen plugin tools", () => {
     const tools = createKleinanzeigenTools();
     assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_verify"), false);
     assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_status"), false);
+    assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_ad_schema"), false);
+    assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_read_ad"), false);
+    assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_images_list"), false);
     assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_browser_status"), false);
     assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_browser_check"), false);
     assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_browser_configure"), true);
+    assert.equal(SIDE_EFFECT_TOOL_NAMES.has("kleinanzeigen_draft_ad"), true);
     assert.equal(OPTIONAL_TOOL_NAMES.has("kleinanzeigen_verify"), true);
     assert.equal(OPTIONAL_TOOL_NAMES.has("kleinanzeigen_status"), true);
+    assert.equal(OPTIONAL_TOOL_NAMES.has("kleinanzeigen_ad_schema"), true);
+    assert.equal(OPTIONAL_TOOL_NAMES.has("kleinanzeigen_read_ad"), true);
+    assert.equal(OPTIONAL_TOOL_NAMES.has("kleinanzeigen_images_list"), true);
     assert.equal(OPTIONAL_TOOL_NAMES.has("kleinanzeigen_browser_status"), true);
     assert.equal(OPTIONAL_TOOL_NAMES.has("kleinanzeigen_browser_check"), true);
     assert.equal(APPROVAL_TOOL_NAMES.has("kleinanzeigen_verify"), true);
     assert.equal(APPROVAL_TOOL_NAMES.has("kleinanzeigen_status"), true);
-    assert.equal(tools.length, 11);
+    assert.equal(tools.length, 15);
     assert.deepEqual(
       tools.filter((tool) => SIDE_EFFECT_TOOL_NAMES.has(tool.name)).map((tool) => tool.name),
       [
         "kleinanzeigen_browser_configure",
+        "kleinanzeigen_draft_ad",
         "kleinanzeigen_publish",
         "kleinanzeigen_update",
         "kleinanzeigen_delete",
@@ -92,6 +100,30 @@ describe("kleinanzeigen plugin tools", () => {
     assert.match(description, /Profile name: Default/);
     assert.match(description, /Allow unsupported browser: false/);
     assert.doesNotMatch(description, /\/private/);
+  });
+
+  it("summarizes draft writes without leaking absolute ad roots", () => {
+    const description = buildKleinanzeigenApprovalDescription({
+      toolName: "kleinanzeigen_draft_ad",
+      params: {
+        confirm: true,
+        directory: "/ads/ONGOING/boxen",
+        fileName: "ad.yaml",
+        title: "Boxen von Kenwood",
+        category: "Elektronik > Audio",
+        active: false,
+        overwrite: false,
+      },
+      config: {
+        adRoots: ["/ads"],
+      },
+    });
+
+    assert.match(description, /Operation: draft_ad/);
+    assert.match(description, /Draft directory: ONGOING\/boxen/);
+    assert.match(description, /Title: Boxen von Kenwood/);
+    assert.match(description, /Active: false/);
+    assert.doesNotMatch(description, /\/ads/);
   });
 
   it("runs a mock CLI and returns sanitized output", async () => {

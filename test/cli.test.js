@@ -9,12 +9,16 @@ import {
   buildKleinanzeigenArgs,
   checkKleinanzeigenBrowser,
   configureKleinanzeigenBrowser,
+  draftKleinanzeigenAd,
   detectUserActionRequest,
   extractKleinanzeigenDiagnostics,
+  getKleinanzeigenAdSchema,
   getKleinanzeigenBrowserStatus,
   getKleinanzeigenStatus,
+  listKleinanzeigenImages,
   listKleinanzeigenAds,
   redactArgs,
+  readKleinanzeigenAd,
   runKleinanzeigenOperation,
   runProcess,
   sanitizeText,
@@ -352,6 +356,125 @@ describe("browser config tools", () => {
     assert.equal(result.canUse, true);
     assert.equal(result.command.args.at(-1), "diagnose");
     assert.match(original, /binary_location: ""/);
+  });
+});
+
+describe("ad authoring tools", () => {
+  it("returns ad schema guidance without reading local config", () => {
+    const result = getKleinanzeigenAdSchema();
+
+    assert.equal(result.ok, true);
+    assert.equal(result.operation, "ad_schema");
+    assert.deepEqual(result.schema.requiredForDraft, ["title", "description", "category"]);
+    assert.equal(result.schema.limits.title.maxLength, 65);
+    assert.equal(result.schema.template.active, false);
+  });
+
+  it("reads one selected ad with contact fields redacted by default", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "kleinclaw-read-ad-"));
+    const adDir = path.join(tmp, "ONGOING", "boxen");
+    const adPath = path.join(adDir, "ad.yaml");
+    await fs.mkdir(adDir, { recursive: true });
+    await fs.writeFile(
+      adPath,
+      [
+        "active: true",
+        "title: Boxen von Kenwood",
+        "description: Guter Zustand",
+        "category: Elektronik > Audio",
+        "contact:",
+        "  name: Secret Name",
+        "  phone: \"01234\"",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const result = await readKleinanzeigenAd(
+      { adDirectories: [adDir] },
+      { adRoots: [tmp] },
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.adPath, path.join("ONGOING", "boxen", "ad.yaml"));
+    assert.equal(result.summary.title, "Boxen von Kenwood");
+    assert.match(result.yaml, /name: \[redacted-contact\]/);
+    assert.doesNotMatch(result.yaml, /Secret Name|01234/);
+  });
+
+  it("lists local image files with dimensions and bot support", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "kleinclaw-images-"));
+    const adDir = path.join(tmp, "ONGOING", "boxen");
+    await fs.mkdir(adDir, { recursive: true });
+    await fs.writeFile(
+      path.join(adDir, "boxen.png"),
+      Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2jvWyAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        "base64",
+      ),
+    );
+    await fs.writeFile(path.join(adDir, "ignore.txt"), "not an image", "utf8");
+
+    const result = await listKleinanzeigenImages(
+      { directory: adDir },
+      { adRoots: [tmp] },
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.count, 1);
+    assert.equal(result.images[0].file, "boxen.png");
+    assert.equal(result.images[0].width, 2);
+    assert.equal(result.images[0].height, 3);
+    assert.equal(result.images[0].supportedByBot, true);
+  });
+
+  it("creates a safe inactive ad draft under configured roots", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "kleinclaw-draft-"));
+    const adDir = path.join(tmp, "ONGOING", "boxen");
+
+    const result = await draftKleinanzeigenAd(
+      {
+        confirm: true,
+        directory: adDir,
+        title: "Boxen von Kenwood",
+        description: "Guter Zustand.\nAbholung bevorzugt.",
+        category: "Elektronik > Audio",
+        price: 25,
+        priceType: "NEGOTIABLE",
+        shippingType: "PICKUP",
+        images: ["boxen_*.{jpg,png}"],
+        specialAttributes: { condition_s: "like_new" },
+      },
+      { adRoots: [tmp] },
+    );
+    const yaml = await fs.readFile(path.join(adDir, "ad.yaml"), "utf8");
+
+    assert.equal(result.ok, true);
+    assert.equal(result.active, false);
+    assert.match(yaml, /active: false/);
+    assert.match(yaml, /title: "Boxen von Kenwood"/);
+    assert.match(yaml, /description: \|/);
+    assert.match(yaml, /condition_s: "like_new"/);
+    assert.match(yaml, /images:\n  - "boxen_\*\.\{jpg,png\}"/);
+  });
+
+  it("rejects draft image paths that escape the ad directory", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "kleinclaw-draft-"));
+
+    await assert.rejects(
+      () =>
+        draftKleinanzeigenAd(
+          {
+            confirm: true,
+            directory: path.join(tmp, "draft"),
+            title: "Boxen von Kenwood",
+            description: "Guter Zustand",
+            category: "Elektronik > Audio",
+            images: ["../secret.jpg"],
+          },
+          { adRoots: [tmp] },
+        ),
+      /relative to the ad directory/,
+    );
   });
 });
 

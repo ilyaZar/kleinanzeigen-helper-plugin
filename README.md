@@ -21,12 +21,19 @@ before returning it to your OpenClaw agent.
 
 - `kleinanzeigen_status`: checks local bot availability and config wiring.
 - `kleinanzeigen_list_ads`: lists local ad folders under trusted `adRoots`.
+- `kleinanzeigen_ad_schema`: explains the safe ad YAML shape and limits.
+- `kleinanzeigen_read_ad`: reads one selected ad config under `adRoots`, with
+  contact fields redacted by default.
+- `kleinanzeigen_images_list`: inventories local image files under one trusted
+  directory.
 - `kleinanzeigen_browser_status`: shows selected browser settings and locally
   detected browser binaries.
 - `kleinanzeigen_browser_check`: runs the bot browser diagnostics against the
   current or proposed browser settings.
 - `kleinanzeigen_browser_configure`: changes the bot browser binary, private
   window flag, or browser profile settings.
+- `kleinanzeigen_draft_ad`: writes a safe inactive `ad.yaml` draft under
+  `adRoots`.
 - `kleinanzeigen_verify`: checks the configured local bot setup.
 - `kleinanzeigen_publish`: publishes or republishes selected ads.
 - `kleinanzeigen_update`: updates changed or selected ads.
@@ -116,6 +123,73 @@ finer control. For a minimal KleinClaw-only dev agent:
 OpenClaw approval requests include the operation, selector, explicit ad IDs, and
 ad paths relative to configured `adRoots`. Check those details before approving
 mutating tools.
+
+### Ad authoring
+
+KleinClaw can help an agent draft new local ads without giving it broad access
+to your home directory. The authoring tools are scoped to configured `adRoots`:
+
+```json
+{
+  "adRoots": ["/home/me/kleinanzeigen-ads"]
+}
+```
+
+Use `kleinanzeigen_ad_schema` before drafting. It returns the supported YAML
+shape, title and description limits, enum values, image-glob rules, and a safe
+draft workflow. The key bot constraints are:
+
+- `title`: 10 to 65 characters.
+- `description`: at most 4000 characters.
+- `category`: built-in category name, custom mapped name, or category ID.
+- `images`: glob patterns relative to the ad config file.
+- `priceType: "FIXED"` requires `price`; `GIVE_AWAY` must not set `price`.
+
+Use `kleinanzeigen_images_list` on a selected folder to discover candidate
+image filenames and dimensions:
+
+```json
+{
+  "directory": "/home/me/kleinanzeigen-ads/ONGOING/boxen",
+  "maxDepth": 1
+}
+```
+
+Use `kleinanzeigen_read_ad` only for explicit examples you want the agent to
+see. It reads one selected ad file under `adRoots` and redacts `contact:` fields
+unless `includeContact` is set to `true`:
+
+```json
+{
+  "adDirectories": ["/home/me/kleinanzeigen-ads/ONGOING/example"]
+}
+```
+
+Use `kleinanzeigen_draft_ad` to create a draft. Drafts default to
+`active: false`, so they are not eligible for publishing until you deliberately
+activate them:
+
+```json
+{
+  "confirm": true,
+  "directory": "/home/me/kleinanzeigen-ads/ONGOING/boxen",
+  "title": "Boxen von Kenwood",
+  "description": "Guter Zustand. Abholung bevorzugt.",
+  "category": "Elektronik > Audio",
+  "price": 25,
+  "priceType": "NEGOTIABLE",
+  "shippingType": "PICKUP",
+  "images": ["boxen_*.{jpg,png}"]
+}
+```
+
+Recommended loop:
+
+1. List images with `kleinanzeigen_images_list`.
+2. Create a draft with `kleinanzeigen_draft_ad`.
+3. Run scoped `kleinanzeigen_verify` on that draft directory.
+4. Review the YAML and set `active: true` only when ready.
+5. Publish with `kleinanzeigen_publish` scoped to the same directory.
 
 ### Browser settings
 
