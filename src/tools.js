@@ -4,9 +4,13 @@ import {
   buildRedactions,
   checkKleinanzeigenBrowser,
   configureKleinanzeigenBrowser,
+  draftKleinanzeigenAd,
+  getKleinanzeigenAdSchema,
   getKleinanzeigenBrowserStatus,
   getKleinanzeigenStatus,
+  listKleinanzeigenImages,
   listKleinanzeigenAds,
+  readKleinanzeigenAd,
   runKleinanzeigenOperation,
   sanitizeText,
 } from "./cli.js";
@@ -18,11 +22,15 @@ export const SIDE_EFFECT_TOOL_NAMES = new Set([
   "kleinanzeigen_download",
   "kleinanzeigen_extend",
   "kleinanzeigen_browser_configure",
+  "kleinanzeigen_draft_ad",
 ]);
 
 export const OPTIONAL_TOOL_NAMES = new Set([
   "kleinanzeigen_status",
   "kleinanzeigen_list_ads",
+  "kleinanzeigen_ad_schema",
+  "kleinanzeigen_read_ad",
+  "kleinanzeigen_images_list",
   "kleinanzeigen_browser_status",
   "kleinanzeigen_browser_check",
   "kleinanzeigen_verify",
@@ -137,6 +145,25 @@ export function buildKleinanzeigenApprovalDescription({ toolName, params = {}, c
     if (typeof params.allowUnsupportedBrowser === "boolean") {
       lines.push(`Allow unsupported browser: ${params.allowUnsupportedBrowser}`);
     }
+  } else if (operation === "draft_ad") {
+    if (typeof params.directory === "string") {
+      lines.push(`Draft directory: ${relativeConfiguredPath(params.directory, config)}`);
+    }
+    if (typeof params.fileName === "string") {
+      lines.push(`Draft file: ${params.fileName}`);
+    }
+    if (typeof params.title === "string") {
+      lines.push(`Title: ${params.title}`);
+    }
+    if (typeof params.category === "string") {
+      lines.push(`Category: ${params.category}`);
+    }
+    if (typeof params.active === "boolean") {
+      lines.push(`Active: ${params.active}`);
+    }
+    if (typeof params.overwrite === "boolean") {
+      lines.push(`Overwrite: ${params.overwrite}`);
+    }
   } else if (!adDirectories && !adConfigPaths && !Array.isArray(params.adIds)) {
     lines.push("Scope: bot config default selection");
   }
@@ -179,8 +206,20 @@ const adDirectoriesSchema = {
   items: {
     type: "string",
   },
-  description:
-    "Directories containing ad.yaml, ad.yml, or ad.json to scope this operation to. Paths must be inside configured adRoots.",
+  description: [
+    "Directories containing ad.yaml, ad.yml, or ad.json to scope this operation to.",
+    "Paths must be inside configured adRoots.",
+  ].join(" "),
+};
+
+const singleAdConfigPathsSchema = {
+  ...adConfigPathsSchema,
+  maxItems: 1,
+};
+
+const singleAdDirectoriesSchema = {
+  ...adDirectoriesSchema,
+  maxItems: 1,
 };
 
 const confirmSchema = {
@@ -203,6 +242,119 @@ const profileModeSchema = {
     "bot clears profile settings, system-default uses the chosen browser's",
     "normal profile root, custom uses userDataDir.",
   ].join(" "),
+};
+
+const draftStringMapSchema = {
+  type: "object",
+  additionalProperties: { type: "string" },
+};
+
+const draftAdProperties = {
+  confirm: confirmSchema,
+  directory: {
+    type: "string",
+    description:
+      "Target draft directory inside configured adRoots. Relative paths resolve under the first adRoot.",
+  },
+  fileName: {
+    type: "string",
+    enum: ["ad.yaml", "ad.yml"],
+    description: "Draft file name. Defaults to ad.yaml.",
+  },
+  overwrite: {
+    type: "boolean",
+    description: "Replace an existing draft file. Defaults to false.",
+  },
+  active: {
+    type: "boolean",
+    description: "Whether the ad is eligible for publish. Defaults to false for safe drafts.",
+  },
+  type: {
+    type: "string",
+    enum: ["OFFER", "WANTED"],
+    description: "Listing type. Defaults to OFFER.",
+  },
+  title: {
+    type: "string",
+    minLength: 10,
+    maxLength: 65,
+    description: "Kleinanzeigen title.",
+  },
+  description: {
+    type: "string",
+    maxLength: 4000,
+    description: "Ad description. Multiline text is supported.",
+  },
+  descriptionPrefix: {
+    type: "string",
+    description: "Optional ad-level description prefix.",
+  },
+  descriptionSuffix: {
+    type: "string",
+    description: "Optional ad-level description suffix.",
+  },
+  category: {
+    type: "string",
+    description: "Built-in category name, custom mapped category name, or category ID.",
+  },
+  specialAttributes: draftStringMapSchema,
+  price: {
+    type: "integer",
+    minimum: 0,
+    description: "Whole euro price. Required when priceType is FIXED.",
+  },
+  priceType: {
+    type: "string",
+    enum: ["FIXED", "NEGOTIABLE", "GIVE_AWAY", "NOT_APPLICABLE"],
+    description: "Pricing mode. Defaults to NEGOTIABLE.",
+  },
+  shippingType: {
+    type: "string",
+    enum: ["PICKUP", "SHIPPING", "NOT_APPLICABLE"],
+    description: "Shipping mode. Defaults to PICKUP for drafts.",
+  },
+  shippingCosts: {
+    type: "number",
+    minimum: 0,
+    description: "Custom shipping cost.",
+  },
+  shippingOptions: {
+    type: "array",
+    minItems: 1,
+    maxItems: 8,
+    items: {
+      type: "string",
+      enum: [
+        "DHL_2",
+        "Hermes_Päckchen",
+        "Hermes_S",
+        "DHL_5",
+        "Hermes_M",
+        "DHL_10",
+        "DHL_20",
+        "DHL_31,5",
+        "Hermes_L",
+      ],
+    },
+    description: "Predefined package options. Use one size group.",
+  },
+  sellDirectly: {
+    type: "boolean",
+    description: "Enable direct purchase. Requires shipping settings.",
+  },
+  images: {
+    type: "array",
+    minItems: 1,
+    maxItems: 24,
+    items: { type: "string" },
+    description: "Image glob patterns relative to the draft ad directory.",
+  },
+  contact: draftStringMapSchema,
+  republicationInterval: {
+    type: "integer",
+    minimum: 1,
+    description: "Days between republication cycles.",
+  },
 };
 
 function textResult(payload) {
@@ -292,6 +444,155 @@ function listAdsTool(config) {
           return textResult({
             ok: false,
             operation: "list_ads",
+            exitCode: null,
+            signal: null,
+            timedOut: false,
+            needsUserAction: false,
+            stdout: "",
+            stderr,
+          });
+        }
+      },
+    },
+    config,
+  );
+}
+
+function adSchemaTool(config) {
+  return bindToolConfig(
+    {
+      name: "kleinanzeigen_ad_schema",
+      label: "Kleinanzeigen Ad Schema",
+      description:
+        "Return a safe ad YAML schema and draft workflow for kleinanzeigen-bot ads.",
+      parameters: objectSchema({}),
+      async execute(_toolCallId) {
+        return textResult(getKleinanzeigenAdSchema());
+      },
+    },
+    config,
+  );
+}
+
+function readAdTool(config) {
+  return bindToolConfig(
+    {
+      name: "kleinanzeigen_read_ad",
+      label: "Kleinanzeigen Read Ad",
+      description:
+        "Read one existing ad config under trusted adRoots with contact fields redacted by default.",
+      parameters: objectSchema({
+        adConfigPaths: singleAdConfigPathsSchema,
+        adDirectories: singleAdDirectoriesSchema,
+        includeContact: {
+          type: "boolean",
+          description: "Include contact fields instead of redacting them. Defaults to false.",
+        },
+      }),
+      async execute(_toolCallId, params) {
+        try {
+          return textResult(await readKleinanzeigenAd(params ?? {}, this.config));
+        } catch (error) {
+          const stderr = sanitizeText(
+            error instanceof Error ? error.message : String(error),
+            buildRedactions(this.config),
+            2000,
+          );
+          return textResult({
+            ok: false,
+            operation: "read_ad",
+            exitCode: null,
+            signal: null,
+            timedOut: false,
+            needsUserAction: false,
+            stdout: "",
+            stderr,
+          });
+        }
+      },
+    },
+    config,
+  );
+}
+
+function imagesListTool(config) {
+  return bindToolConfig(
+    {
+      name: "kleinanzeigen_images_list",
+      label: "Kleinanzeigen Images List",
+      description:
+        "List image files and basic dimensions under one trusted adRoots directory.",
+      parameters: objectSchema(
+        {
+          directory: {
+            type: "string",
+            description:
+              "Directory to scan. Must be inside configured adRoots; relative paths use the first adRoot.",
+          },
+          maxDepth: {
+            type: "integer",
+            minimum: 0,
+            maximum: 6,
+            description: "Maximum directory recursion depth. Defaults to 2.",
+          },
+          maxResults: {
+            type: "integer",
+            minimum: 1,
+            maximum: 500,
+            description: "Maximum images to return. Defaults to 100.",
+          },
+        },
+        ["directory"],
+      ),
+      async execute(_toolCallId, params) {
+        try {
+          return textResult(await listKleinanzeigenImages(params ?? {}, this.config));
+        } catch (error) {
+          const stderr = sanitizeText(
+            error instanceof Error ? error.message : String(error),
+            buildRedactions(this.config),
+            2000,
+          );
+          return textResult({
+            ok: false,
+            operation: "images_list",
+            exitCode: null,
+            signal: null,
+            timedOut: false,
+            needsUserAction: false,
+            stdout: "",
+            stderr,
+          });
+        }
+      },
+    },
+    config,
+  );
+}
+
+function draftAdTool(config) {
+  return bindToolConfig(
+    {
+      name: "kleinanzeigen_draft_ad",
+      label: "Kleinanzeigen Draft Ad",
+      description:
+        "Create or replace a safe ad.yaml draft under trusted adRoots without publishing.",
+      parameters: objectSchema(
+        draftAdProperties,
+        ["confirm", "directory", "title", "description", "category"],
+      ),
+      async execute(_toolCallId, params) {
+        try {
+          return textResult(await draftKleinanzeigenAd(params ?? {}, this.config));
+        } catch (error) {
+          const stderr = sanitizeText(
+            error instanceof Error ? error.message : String(error),
+            buildRedactions(this.config),
+            2000,
+          );
+          return textResult({
+            ok: false,
+            operation: "draft_ad",
             exitCode: null,
             signal: null,
             timedOut: false,
@@ -506,9 +807,13 @@ export function createKleinanzeigenTools(config = {}) {
       config,
     ),
     listAdsTool(config),
+    adSchemaTool(config),
+    readAdTool(config),
+    imagesListTool(config),
     browserStatusTool(config),
     browserCheckTool(config),
     browserConfigureTool(config),
+    draftAdTool(config),
     bindToolConfig(
       operationTool({
         name: "kleinanzeigen_verify",

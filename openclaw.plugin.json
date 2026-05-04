@@ -10,9 +10,13 @@
     "tools": [
       "kleinanzeigen_status",
       "kleinanzeigen_list_ads",
+      "kleinanzeigen_ad_schema",
+      "kleinanzeigen_read_ad",
+      "kleinanzeigen_images_list",
       "kleinanzeigen_browser_status",
       "kleinanzeigen_browser_check",
       "kleinanzeigen_browser_configure",
+      "kleinanzeigen_draft_ad",
       "kleinanzeigen_verify",
       "kleinanzeigen_publish",
       "kleinanzeigen_update",
