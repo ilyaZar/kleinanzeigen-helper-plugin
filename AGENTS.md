@@ -21,6 +21,7 @@ Useful dev checks:
 
 ```bash
 npm test
+npm run package:check
 npm run coverage
 npm pack --dry-run --json --ignore-scripts
 npx --yes clawhub package publish . --dry-run --json \

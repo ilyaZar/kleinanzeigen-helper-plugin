@@ -6,6 +6,9 @@
   "activation": {
     "onStartup": true
   },
+  "skills": [
+    "./skills"
+  ],
   "contracts": {
     "tools": [
       "kleinanzeigen_status",
