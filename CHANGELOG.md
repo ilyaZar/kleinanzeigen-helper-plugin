@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- ship the helper skill inside the plugin package
+- verify packaged files before publishing
+
 ## 0.1.2
 
 - delegate local command execution to the OpenClaw runtime command helper
