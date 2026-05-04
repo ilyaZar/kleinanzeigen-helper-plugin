@@ -83,16 +83,26 @@ describe("package install boundary", () => {
     }
   });
 
-  it("uses absolute README image URLs for registry renderers", async () => {
+  it("uses registry-safe README image URLs and fallbacks", async () => {
     const readme = await fs.readFile("README.md", "utf8");
-    const imageSrcs = [...readme.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].map(
-      ([, src]) => src,
-    );
+    const images = [...readme.matchAll(/<img\b([^>]*)>/g)].map(([, attrs]) => ({
+      alt: attrs.match(/\balt="([^"]+)"/)?.[1],
+      src: attrs.match(/\bsrc="([^"]+)"/)?.[1],
+    }));
+    const files = await npmPackDryRunFiles();
 
-    assert.notEqual(imageSrcs.length, 0);
+    assert.notEqual(images.length, 0);
 
-    for (const src of imageSrcs) {
-      assert.match(src, /^https:\/\//, `${src} should be absolute`);
+    for (const image of images) {
+      assert.equal(typeof image.alt, "string");
+      assert.equal(typeof image.src, "string");
+
+      if (image.src.startsWith("https://")) {
+        continue;
+      }
+
+      await fs.access(image.src);
+      assert.equal(files.has(image.src), false, `${image.src} should fall back to alt text`);
     }
   });
 
