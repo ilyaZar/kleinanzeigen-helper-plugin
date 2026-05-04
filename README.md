@@ -55,6 +55,12 @@ is connected. Account-changing tools still require `confirm: true`. Tool output
 is capped and redacted for configured paths, email addresses, and
 credential-like lines.
 
+The package also ships a `kleinanzeigen-helper-skill` under `skills/`. OpenClaw
+loads plugin skills when the plugin is enabled, so agents get the longer
+operating guide for safe discovery, drafting, browser checks, publish preflight,
+and result interpretation without putting those instructions into every tool
+description.
+
 ## Install
 
 ### Kleinanzeigen tool
@@ -349,6 +355,7 @@ locally, then run `kleinanzeigen_verify` again.
 
 ```bash
 npm test
+npm run package:check
 npm pack --dry-run --json --ignore-scripts
 npx clawhub package publish . --dry-run --json \
   --source-repo ilyaZar/kleinclaw \
